@@ -3,7 +3,7 @@ import pandas as pd
 import logging
 
 from app.summary_stats import generate_summary_stats
-from app.stat_tests import hypothesis_tests
+from app.stat_tests import run_normal_tests, run_nonparametric_tests, run_mean_tests, run_association_tests
 
 if __name__ == "__main__":
     
@@ -23,10 +23,10 @@ if __name__ == "__main__":
         "-m", "--missing_treatment", help="Either drop rows with missing data, or replace missing data with mean of each column", type=str, required=False, default='drop'
     )
     parser.add_argument(
-        "-g", "--summary_stats", help="Specify summary stats to generate, if needed (can specify specific type, or whole suite)", type=str, required=True, default='suite'
+        "-n", "--distribution", help="Non-parametric or normal distribution (support for other distributions to be added in future)", type=str, required=True, default='non-parametric'
     )
     parser.add_argument(
-        "-h", "--hypothesis_tests", help="Specify hypothesis tests to run, if needed (can specify specific type, or whole suite)", type=str, required=True, default='suite'
+        "-a", "--alternative", help="Two-sided tests (default), greater or less", type=str, required=True, default='two-sided'
     )
     parser.add_argument(
         "-o", "--output_folder", help="Output directory for model, predictions and fit metrics", type=str, required=False, default='output/'
@@ -40,17 +40,18 @@ if __name__ == "__main__":
     #data is mount point
     data = pd.read_csv('/data/' + args.data)
     
-    generate_summary_stats(data = data, s1 = args.sample1, s2 = args.sample2, missing_treatment = args.missing_treatment, output = args.output_folder)
+    group1, group2, metadata = generate_summary_stats(data = data, s1 = args.sample1, s2 = args.sample2, missing_treatment = args.missing_treatment, output = args.output_folder)
     logging.info("Summary stats generated")
     
-    hypothesis_tests(data = data, s1 = args.sample1, s2 = args.sample2, missing_treatment = args.missing_treatment, output = args.output_folder)
-    logging.info("Hypothesis tests run")
+    run_normal_tests(group1, group2, s1 = args.sample1, s2 = args.sample2, alternative = args.alternative, output = args.output_folder)
+    logging.info("Normal tests run")
     
-    #monte_carlo(data = data, s1 = args.sample1, s2 = args.sample2, missing_treatment = args.missing_treatment, output = args.output_folder)
-    logging.info("Monte carlo sampling tests run")
+    run_nonparametric_tests(group1, group2, s1 = args.sample1, s2 = args.sample2, alternative = args.alternative, output = args.output_folder)
+    logging.info("Non-parametric tests run")
     
-    #transformations(data = data, s1 = args.sample1, s2 = args.sample2, missing_treatment = args.missing_treatment, output = args.output_folder)
-    logging.info("Transformations applied")
+    run_mean_tests(group1, group2, s1 = args.sample1, s2 = args.sample2, alternative = args.alternative, output = args.output_folder)
+    logging.info("Mean tests run")
     
-    #sampling(data = data, s1 = args.sample1, s2 = args.sample2, missing_treatment = args.missing_treatment, output = args.output_folder)
-    logging.info("Data sampled")
+    run_association_tests(group1, group2, s1 = args.sample1, s2 = args.sample2, alternative = args.alternative, distribution = args.distribution, output = args.output_folder)
+    logging.info("Association tests run")
+    

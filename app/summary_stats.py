@@ -3,17 +3,7 @@ import numpy as np
 from scipy import stats
 import matplotlib.pyplot as plt
 
-
-def process_missing(data, column, missing_treatment = 'drop'):
-    if missing_treatment == 'drop':
-        imputed = data[column].dropna()
-    elif missing_treatment == 'mean':
-        mean = data[column].mean()
-        imputed = data[column].fillna(mean)
-    elif missing_treatment == 'ffill':
-        imputed = data[column].fillna(method='ffill')
-    array = imputed.to_numpy()
-    return(array)
+from app.common_functions import process_missing
 
 
 def generate_histograms(array, column, bins = 20, output = "/output/"):
@@ -32,7 +22,8 @@ def generate_histograms(array, column, bins = 20, output = "/output/"):
     
 def generate_summary_stats(data, s1, s2 = None, missing_treatment = 'drop', output = "/output/"):
     
-    nobs = data.shape[0]
+    metadata = {}
+    metadata['nobs'] = data.shape[0]
     
     # Get data and handle missing data
     data[s1] = pd.to_numeric(data[s1], errors='coerce')
@@ -56,11 +47,11 @@ def generate_summary_stats(data, s1, s2 = None, missing_treatment = 'drop', outp
         mode2 = data[s2].mode
     
     # Table1: Observations, Missing, Mean, Mode, Variance, Stdev, Skewness, Kurtosis
-    input_metrics1 = [nobs, missing1, str((missing1/nobs)*100)+"%", descriptive1[2], mode1, descriptive1[3], descriptive1[3]**(0.5), descriptive1[4], descriptive1[5]]
+    input_metrics1 = [metadata['nobs'], missing1, str((missing1/metadata['nobs'])*100)+"%", descriptive1[2], mode1, descriptive1[3], descriptive1[3]**(0.5), descriptive1[4], descriptive1[5]]
     if s2 == None:
         Table1 = pd.DataFrame(input_metrics1, index = ['Observations','Missing/Invalid','Missing Percent','Mean','Mode','Variance','Standard Deviation','Skewness','Kurtosis'], columns = [s1])
     else:
-        input_metrics2 = [nobs, missing2, str((missing2/nobs)*100)+"%", descriptive2[2], mode2, descriptive2[3], descriptive2[3]**(0.5), descriptive2[4], descriptive2[5]]
+        input_metrics2 = [metadata['nobs'], missing2, str((missing2/metadata['nobs'])*100)+"%", descriptive2[2], mode2, descriptive2[3], descriptive2[3]**(0.5), descriptive2[4], descriptive2[5]]
         Table1 = pd.DataFrame([input_metrics1,input_metrics2], columns = ['Observations','Missing Count','Missing Percent','Mean','Mode','Variance','Standard Deviation','Skewness','Kurtosis'], index = [s1,s2]).T
     Table1.to_csv(output + 'Descriptive Statistics.csv')
     
@@ -83,3 +74,5 @@ def generate_summary_stats(data, s1, s2 = None, missing_treatment = 'drop', outp
     generate_histograms(group1, s1, bins = 20, output = "/output/")
     if s2 != None:
         generate_histograms(group2, s2, bins = 20, output = "/output/")
+        
+    return group1, group2, metadata
